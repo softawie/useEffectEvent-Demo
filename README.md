@@ -1,46 +1,253 @@
-# Getting Started with Create React App
+# useEffectEvent Demo - React Web Version
 
-This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
+🚀 **Interactive demonstration of React's experimental `useEffectEvent` hook for performance optimization**
 
-## Available Scripts
+This project showcases the benefits of `useEffectEvent` through a comprehensive, interactive web demo adapted from React Native to React Web. Experience firsthand how this experimental React feature can dramatically improve your application's performance by preventing unnecessary effect recreations.
 
-In the project directory, you can run:
+![useEffectEvent Demo](https://img.shields.io/badge/React-19.2.0-blue) ![TypeScript](https://img.shields.io/badge/TypeScript-4.9.5-blue) ![Status](https://img.shields.io/badge/Status-Production%20Ready-green)
 
-### `npm start`
+## 🎯 What You'll Learn
 
-Runs the app in the development mode.\
-Open [http://localhost:3000](http://localhost:3000) to view it in the browser.
+- **Performance Optimization**: See real-time performance differences between components with and without `useEffectEvent`
+- **Effect Dependencies**: Understand how function dependencies can cause unnecessary effect recreations
+- **Best Practices**: Learn when and how to implement `useEffectEvent` in your projects
+- **Real-world Applications**: Explore practical use cases for `useEffectEvent`
 
-The page will reload if you make edits.\
-You will also see any lint errors in the console.
+## 🚀 Quick Start
 
-### `npm test`
+### Prerequisites
+- Node.js 16+ 
+- npm or yarn
 
-Launches the test runner in the interactive watch mode.\
-See the section about [running tests](https://facebook.github.io/create-react-app/docs/running-tests) for more information.
+### Installation & Setup
 
-### `npm run build`
+```bash
+# Clone the repository
+git clone <your-repo-url>
+cd tutorial-react
 
-Builds the app for production to the `build` folder.\
-It correctly bundles React in production mode and optimizes the build for the best performance.
+# Install dependencies
+npm install
 
-The build is minified and the filenames include the hashes.\
-Your app is ready to be deployed!
+# Start the development server
+npm start
+```
 
-See the section about [deployment](https://facebook.github.io/create-react-app/docs/deployment) for more information.
+Open [http://localhost:3000](http://localhost:3000) to view the interactive demo.
 
-### `npm run eject`
+## 🎮 How to Use the Demo
 
-**Note: this is a one-way operation. Once you `eject`, you can’t go back!**
+### 1. **Interactive Comparison**
+- Toggle between "Both Components", "Without Only", or "With Only" modes
+- Click "Force Parent Rerender" to trigger re-renders and observe the differences
+- Watch the **Timer Recreations** counter to see performance impact
 
-If you aren’t satisfied with the build tool and configuration choices, you can `eject` at any time. This command will remove the single build dependency from your project.
+### 2. **Performance Monitoring**
+- Real-time logs show when timers are created/destroyed
+- Color-coded messages (🔴 for issues, 🟢 for optimized)
+- Timestamps help track performance patterns
 
-Instead, it will copy all the configuration files and the transitive dependencies (webpack, Babel, ESLint, etc) right into your project so you have full control over them. All of the commands except `eject` will still work, but they will point to the copied scripts so you can tweak them. At this point you’re on your own.
+### 3. **Code Examples**
+- Click "📝 Show Code" on each component to see implementation details
+- View the `useEffectEvent` polyfill implementation
+- Compare side-by-side code differences
 
-You don’t have to ever use `eject`. The curated feature set is suitable for small and middle deployments, and you shouldn’t feel obligated to use this feature. However we understand that this tool wouldn’t be useful if you couldn’t customize it when you are ready for it.
+## 🔧 Technical Implementation
 
-## Learn More
+### useEffectEvent Polyfill
 
-You can learn more in the [Create React App documentation](https://facebook.github.io/create-react-app/docs/getting-started).
+```typescript
+function useEffectEvent<T extends (...args: any[]) => any>(fn: T): T {
+  const ref = useRef<T>(fn);
+  ref.current = fn;
+  
+  return useCallback((...args: any[]) => {
+    return ref.current(...args);
+  }, []) as T;
+}
+```
 
-To learn React, check out the [React documentation](https://reactjs.org/).
+**How it works:**
+1. Stores the latest function in a ref
+2. Returns a stable callback that never changes
+3. Always calls the most recent function version
+4. Prevents effect dependency issues
+
+### Component Architecture
+
+```
+App
+├── WithoutUseEffectEvent (❌ Shows performance issues)
+├── WithUseEffectEvent (✅ Shows optimized performance)
+├── PerformanceMonitor (📊 Real-time logging)
+└── CodeModal (📝 Interactive code examples)
+```
+
+## 📊 Performance Comparison
+
+| Aspect | Without useEffectEvent | With useEffectEvent |
+|--------|----------------------|--------------------|
+| **Timer Recreations** | High (every onLog change) | Low (only on count change) |
+| **Memory Usage** | Higher (frequent cleanup) | Lower (stable references) |
+| **Performance** | Degraded | Optimized |
+| **Dependencies** | `[count, onLog]` | `[count]` |
+
+## 🌍 Real-world Use Cases
+
+### 1. **Analytics Tracking**
+```typescript
+// ❌ Without useEffectEvent
+useEffect(() => {
+  analytics.track('page_view', { page: currentPage });
+}, [currentPage, analytics.track]); // Recreates often
+
+// ✅ With useEffectEvent
+const trackEvent = useEffectEvent(analytics.track);
+useEffect(() => {
+  trackEvent('page_view', { page: currentPage });
+}, [currentPage]); // Only page dependency
+```
+
+### 2. **WebSocket Connections**
+```typescript
+// ❌ Without useEffectEvent
+useEffect(() => {
+  const ws = new WebSocket(url);
+  ws.onmessage = onMessage;
+  return () => ws.close();
+}, [url, onMessage]); // Reconnects often
+
+// ✅ With useEffectEvent
+const handleMessage = useEffectEvent(onMessage);
+useEffect(() => {
+  const ws = new WebSocket(url);
+  ws.onmessage = handleMessage;
+  return () => ws.close();
+}, [url]); // Only URL dependency
+```
+
+### 3. **API Calls with Callbacks**
+```typescript
+// ❌ Without useEffectEvent
+useEffect(() => {
+  fetchData(userId).then(onSuccess).catch(onError);
+}, [userId, onSuccess, onError]); // Refetches often
+
+// ✅ With useEffectEvent
+const handleSuccess = useEffectEvent(onSuccess);
+const handleError = useEffectEvent(onError);
+useEffect(() => {
+  fetchData(userId).then(handleSuccess).catch(handleError);
+}, [userId]); // Only userId dependency
+```
+
+## 🎯 Key Benefits
+
+- ✅ **Prevents unnecessary effect recreations**
+- ✅ **Reduces cleanup/setup overhead**
+- ✅ **Maintains stable effect dependencies**
+- ✅ **Improves overall performance**
+- ✅ **Reduces memory pressure from frequent recreations**
+- ✅ **Makes effect dependencies more predictable**
+- ✅ **Separates "reactive" values from "event" handlers**
+
+## 🛠 Development
+
+### Available Scripts
+
+```bash
+# Start development server
+npm start
+
+# Build for production
+npm run build
+
+# Run tests
+npm test
+
+# Eject (not recommended)
+npm run eject
+```
+
+### Project Structure
+
+```
+src/
+├── App.tsx          # Main application component
+├── App.css          # Modern, responsive styling
+├── index.tsx        # Application entry point
+└── ...
+```
+
+## 🎤 Presentation Guide
+
+### **Opening Hook (2 minutes)**
+> "How many of you have experienced performance issues in React apps where effects seem to run more often than expected? Today, I'll show you a React feature that can solve this problem and improve your app's performance significantly."
+
+### **Problem Demonstration (5 minutes)**
+1. Show the app running with "Both Components" mode
+2. Click "Force Parent Rerender" multiple times
+3. Point out the performance monitor:
+   - "Notice how the timer in the first component recreates every time"
+   - "Look at the timer recreation counts - they're increasing rapidly"
+   - "This is happening because the `onLog` function is changing on every parent render"
+
+### **Solution Explanation (5 minutes)**
+1. Switch to "With Only" mode
+2. Show the code differences using the modal
+3. Demonstrate the performance difference:
+   - "Watch the second component - it only recreates the timer when count changes"
+   - "The recreation count stays much lower"
+   - "Performance monitor shows fewer timer recreations"
+
+### **Key Takeaways (3 minutes)**
+- When to use: Effects with frequently changing function dependencies
+- Real-world scenarios: Analytics, WebSocket connections, API calls
+- Performance impact: Significant reduction in unnecessary work
+
+## 📈 Measuring Impact
+
+To measure the impact in your applications:
+
+1. **Use React DevTools Profiler**
+2. **Monitor effect recreation frequency**
+3. **Track memory usage patterns**
+4. **Measure render performance**
+5. **Use performance monitoring tools**
+
+## 🔗 Additional Resources
+
+- [React RFC: useEffectEvent](https://github.com/reactjs/rfcs/blob/main/text/0000-useevent.md)
+- [React Docs: Separating Events from Effects](https://react.dev/learn/separating-events-from-effects)
+- [Performance Optimization in React](https://react.dev/learn/render-and-commit)
+- [React 19 Features](https://react.dev/blog/2024/04/25/react-19)
+
+## 🤝 Contributing
+
+Feel free to extend this demo with additional examples or improvements:
+
+1. **Fork the repository**
+2. **Create a feature branch**
+3. **Add your improvements**
+4. **Submit a pull request**
+
+Ideas for contributions:
+- More complex use cases
+- Memory usage monitoring
+- Automated performance tests
+- Additional comparison scenarios
+- Mobile-responsive improvements
+
+## 📝 License
+
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+
+## 🙏 Acknowledgments
+
+- Adapted from the original React Native implementation
+- Inspired by the React team's work on `useEffectEvent`
+- Built with Create React App and modern React patterns
+
+---
+
+**Remember**: The goal is to show your team practical, measurable benefits that will improve your application's performance and user experience. Use this demo as a starting point for adopting `useEffectEvent` in your codebase! 🚀
