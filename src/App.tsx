@@ -3,15 +3,15 @@
  * Refactored with modular components and custom hooks
  */
 
-import React from 'react';
-import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
-import { DemoApp } from './components/Demo/DemoApp';
-import { ThinkTank } from './components/Quiz/ThinkTank';
-import './App.css';
+import React from "react";
+import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
+import { DemoApp } from "./components/Demo/DemoApp";
+import { ThinkTank } from "./components/Quiz/ThinkTank";
+import "./App.css";
 
 function App() {
   return (
-    <Router>
+    <Router basename={process.env.PUBLIC_URL}>
       <Routes>
         <Route path="/" element={<DemoApp />} />
         <Route path="/quiz" element={<ThinkTank />} />
